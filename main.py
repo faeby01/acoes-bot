@@ -1,17 +1,13 @@
-stock_alert_telegram.py
 import requests,time
 from datetime import datetime
 TOKEN="8750903572:AAEGmATCu-GHKvVkFwP88ocuQzFd2cBkg9Y"
 CHAT="2055797728"
-ATIVOS={"9984.T":"SoftBank🟣","6857.T":"Advantest🔵","6920.T":"Lasertec🟢","8035.T":"TokyoElectron🟠","GC=F":"Ouro🥇","^N225":"Nikkei🗾","^IXIC":"Nasdaq🇺🇸","NVDA":"Nvidia🤖"}
+ATIVOS={"9984.T":"SoftBank","6857.T":"Advantest","6920.T":"Lasertec","8035.T":"TokyoElectron","GC=F":"Ouro","^N225":"Nikkei","^IXIC":"Nasdaq","NVDA":"Nvidia"}
 USD=["GC=F","^IXIC","NVDA"]
 def sinal(p,mn,mx,closes,v):
  amp=((mx-mn)/mn*100)if mn else 0
  media=sum(closes)/len(closes)if closes else p
- pts=0
- if amp>2:pts+=1
- if abs(v)>1:pts+=1
- if(v>0 and p>media)or(v<0 and p<media):pts+=1
+ pts=sum([amp>2,abs(v)>1,(v>0 and p>media)or(v<0 and p<media)])
  return"🟢 BOM PARA TRADE"if pts>=3 else("🟡 MODERADO"if pts==2 else"🔴 EVITAR")
 def preco(t):
  try:
@@ -24,17 +20,16 @@ def preco(t):
   e="📈"if v>=0 else"📉"
   moeda="$"if t in USD else"¥"
   tk=t.replace(".T","").replace("=F","").replace("^","")
-  return f"{tk} 💰{moeda}{p:,.2f} {e}{v:+.2f}%\nMáx{moeda}{mx:,.2f} Mín{moeda}{mn:,.2f}\n{sinal(p,mn,mx,closes,v)}"
+  return f"{tk} {moeda}{p:,.2f} {e}{v:+.2f}%\nMax{moeda}{mx:,.2f} Min{moeda}{mn:,.2f}\n{sinal(p,mn,mx,closes,v)}"
  except Exception as ex:
   return f"Erro: {ex}"
 def enviar(txt):
  requests.post(f"https://api.telegram.org/bot{TOKEN}/sendMessage",json={"chat_id":CHAT,"text":txt},timeout=10)
 def resumo():
- enviar("📊 RESUMO — "+datetime.now().strftime("%d/%m %H:%M"))
+ enviar("RESUMO "+datetime.now().strftime("%d/%m %H:%M"))
  [enviar(f"{n}\n{preco(t)}")or time.sleep(1) for t,n in ATIVOS.items()]
- enviar("✅ Fim do resumo!")
+ enviar("Fim do resumo!")
 e=False
-print("Aguardando 09:00 JST...")
 while True:
  h=datetime.now().strftime("%H:%M")
  if h=="09:00"and not e:resumo();e=True
