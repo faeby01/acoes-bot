@@ -1,4 +1,4 @@
-import requests,time
+iimport requests,time
 from datetime import datetime
 TOKEN="8750903572:AAEGmATCu-GHKvVkFwP88ocuQzFd2cBkg9Y"
 CHAT="2055797728"
@@ -32,7 +32,7 @@ def resumo(titulo):
 e1=False;e2=False
 while True:
  h=datetime.now().strftime("%H:%M")
- if h=="00:30"and not e1:resumo("📊 ABERTURA TSE 09:30 JST");e1=True
+ if h=="00:00"and not e1:resumo("📊 ABERTURA TSE 09:30 JST");e1=True
  if h=="06:00"and not e2:resumo("⏰ FECHAMENTO TSE 15:00 JST");e2=True
  if h=="12:00":e1=False;e2=False
  time.sleep(30)
