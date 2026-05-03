@@ -25,13 +25,14 @@ def preco(t):
   return f"Erro: {ex}"
 def enviar(txt):
  requests.post(f"https://api.telegram.org/bot{TOKEN}/sendMessage",json={"chat_id":CHAT,"text":txt},timeout=10)
-def resumo():
- enviar("RESUMO "+datetime.now().strftime("%d/%m %H:%M")+" UTC")
+def resumo(titulo):
+ enviar(titulo+" "+datetime.now().strftime("%d/%m %H:%M")+" UTC")
  [enviar(f"{n}\n{preco(t)}")or time.sleep(1) for t,n in ATIVOS.items()]
  enviar("Fim do resumo!")
-e=False
+e1=False;e2=False
 while True:
  h=datetime.now().strftime("%H:%M")
- if h=="00:00"and not e:resumo();e=True
- if h=="12:00":e=False
- time.sleep(30) 
+ if h=="00:30"and not e1:resumo("📊 ABERTURA TSE 09:30 JST");e1=True
+ if h=="06:00"and not e2:resumo("⏰ FECHAMENTO TSE 15:00 JST");e2=True
+ if h=="12:00":e1=False;e2=False
+ time.sleep(30)
