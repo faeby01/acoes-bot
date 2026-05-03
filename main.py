@@ -9,6 +9,25 @@ def sinal(p,mn,mx,closes,v):
  media=sum(closes)/len(closes)if closes else p
  pts=sum([amp>2,abs(v)>1,(v>0 and p>media)or(v<0 and p<media)])
  return"🟢 BOM PARA TRADE"if pts>=3 else("🟡 MODERADO"if pts==2 else"🔴 EVITAR")
+def get_noticias(ticker):
+ try:
+  codigo=ticker.replace(".T","").replace("=F","").replace("^","")
+  r=requests.get(f"https://query1.finance.yahoo.com/v1/finance/search?q={codigo}&newsCount=5",headers={"User-Agent":"Mozilla/5.0"},timeout=10).json()
+  titulos=[n["title"]for n in r.get("news",[])[:5]if n.get("title")]
+  return titulos
+ except:
+  return[]
+def analisar_noticias(nome,titulos):
+ if not titulos:return"📰 Sem notícias para analisar"
+ try:
+  prompt=f"Analise estas notícias sobre {nome} e responda APENAS em 3 linhas:\n1) Sentimento: ALTA, BAIXA ou NEUTRO\n2) Motivo principal em 1 frase curta\n3) Risco: ALTO, MÉDIO ou BAIXO\n\nNotícias:\n"+"\n".join(f"- {t}"for t in titulos)
+  r=requests.post("https://api.anthropic.com/v1/messages",
+   headers={"Content-Type":"application/json","anthropic-version":"2023-06-01"},
+   json={"model":"claude-haiku-4-5-20251001","max_tokens":150,"messages":[{"role":"user","content":prompt}]},
+   timeout=15).json()
+  return"🤖 "+r["content"][0]["text"].strip()
+ except:
+  return"🤖 Análise indisponível"
 def preco(t,dia_anterior=False):
  try:
   r=requests.get(f"https://query1.finance.yahoo.com/v8/finance/chart/{t}?range=10d&interval=1d",headers={"User-Agent":"Mozilla/5.0"},timeout=10).json()
@@ -35,7 +54,12 @@ def enviar(txt):
  requests.post(f"https://api.telegram.org/bot{TOKEN}/sendMessage",json={"chat_id":CHAT,"text":txt},timeout=10)
 def resumo(titulo,dia_anterior=False):
  enviar(titulo+" "+datetime.now().strftime("%d/%m %H:%M")+" UTC")
- [enviar(f"{n}\n{preco(t,dia_anterior)}")or time.sleep(1) for t,n in ATIVOS.items()]
+ for t,n in ATIVOS.items():
+  noticias=get_noticias(t)
+  analise=analisar_noticias(n,noticias)
+  msg=f"{n}\n{preco(t,dia_anterior)}\n\n{analise}"
+  enviar(msg)
+  time.sleep(2)
  enviar("Fim do resumo!")
 e1=False;e2=False
 while True:
