@@ -5,7 +5,9 @@ CHAT="2055797728"
 ATIVOS={"8035.T":"Tokyo Electron","7011.T":"Mitsubishi","9984.T":"SoftBank"}
 enviado={}
 def sinal(pts):
- return"BOM PARA TRADE"if pts>=3 else("MODERADO"if pts==2 else"EVITAR")
+ if pts>=3:return"🟢 BOM PARA TRADE"
+ elif pts==2:return"🟡 MODERADO"
+ else:return"🔴 EVITAR"
 def analisar(titulos,v):
  pos_words=["surge","jumps","rises","gains","up","high","record","buy","strong","beat","rally","profit"]
  neg_words=["falls","drops","down","crash","loss","cut","weak","miss","sell","risk","decline","slump"]
@@ -15,13 +17,13 @@ def analisar(titulos,v):
   sent="Notícias positivas"if pos>neg else("Notícias negativas"if neg>pos else"Notícias neutras")
   resumo=titulos[0][:80]
  else:
-  sent="Sem notícias disponíveis";resumo=""
- if v>2:prev="Previsão: ALTA — momento forte de compra"
- elif v<-2:prev="Previsão: BAIXA — pressão de venda"
- elif 0<v<=2:prev="Previsão: leve alta — movimento moderado"
- elif -2<=v<0:prev="Previsão: leve baixa — movimento moderado"
- else:prev="Previsão: neutro — aguardar sinal"
- txt=f"📰 {sent}\n🔮 {prev}"
+  sent="Sem notícias";resumo=""
+ if v>2:prev="🔮 Previsão: ALTA — momento forte"
+ elif v<-2:prev="🔮 Previsão: BAIXA — pressão de venda"
+ elif 0<v<=2:prev="🔮 Previsão: leve alta"
+ elif -2<=v<0:prev="🔮 Previsão: leve baixa"
+ else:prev="🔮 Previsão: neutro — aguardar"
+ txt=f"📰 {sent}\n{prev}"
  if resumo:txt+=f"\n📌 {resumo}"
  return txt
 def get_noticias(ticker):
@@ -40,39 +42,37 @@ def preco(t,modo):
   highs=[c for c in q.get("high",[])if c]
   lows=[c for c in q.get("low",[])if c]
   if modo=="anterior"and len(closes)>=2:
-   p=closes[-1]
-   ref=closes[-2]
-   mx=highs[-1]if highs else p
-   mn=lows[-1]if lows else p
+   p=closes[-1];ref=closes[-2]
+   mx=highs[-1]if highs else p;mn=lows[-1]if lows else p
   else:
-   p=m.get("regularMarketPrice",0)
-   ref=m.get("regularMarketOpen",0)
-   mx=m.get("regularMarketDayHigh",0)
-   mn=m.get("regularMarketDayLow",0)
+   p=m.get("regularMarketPrice",0);ref=m.get("regularMarketOpen",0)
+   mx=m.get("regularMarketDayHigh",0);mn=m.get("regularMarketDayLow",0)
   v=((p-ref)/ref*100)if ref else 0
   amp=((mx-mn)/mn*100)if mn else 0
   media=sum(closes)/len(closes)if closes else p
   pts=sum([amp>2,abs(v)>1,(v>0 and p>media)or(v<0 and p<media)])
-  sinal_txt=sinal(pts)
   e="📈 POSITIVO"if v>=0 else"📉 NEGATIVO"
-  return f"¥{p:,.2f} — {e} {v:+.2f}%\nMáx ¥{mx:,.2f} | Mín ¥{mn:,.2f}\n{sinal_txt}",v
+  return f"¥{p:,.2f} — {e} {v:+.2f}%\nMáx ¥{mx:,.2f} | Mín ¥{mn:,.2f}\n{sinal(pts)}",v
  except Exception as ex:
   return f"Erro: {ex}",0
 def enviar(txt):
  requests.post(f"https://api.telegram.org/bot{TOKEN}/sendMessage",json={"chat_id":CHAT,"text":txt},timeout=10)
 def resumo(chave,titulo,modo):
- hoje=str(date.today())
- if enviado.get(chave)==hoje:return
- enviado[chave]=hoje
+ chave_dia=f"{chave}_{date.today()}"
+ if enviado.get(chave_dia):return
+ enviado[chave_dia]=True
  enviar(f"{titulo} {datetime.now().strftime('%d/%m')}")
  for t,n in ATIVOS.items():
   info,v=preco(t,modo)
   analise=analisar(get_noticias(t),v)
-  enviar(f"━━━━━━━━━━━━━━\n{n} ({t.replace('.T','')})\n{info}\n\n{analise}")
-  time.sleep(2)
+  enviar(f"━━━━━━━━━━━━\n{n} ({t.replace('.T','')})\n{info}\n\n{analise}")
+  time.sleep(3)
  enviar("✅ Fim do resumo!")
+ultima_hora=""
 while True:
  h=datetime.now().strftime("%H:%M")
- if h=="00:00":resumo("manha","📊 ABERTURA 09:00 JST — Ontem:","anterior")
- if h=="06:00":resumo("fechamento","⏰ FECHAMENTO 15:00 JST — Hoje:","dia")
- time.sleep(40)
+ if h!=ultima_hora:
+  ultima_hora=h
+  if h=="00:00":resumo("manha","📊 ABERTURA 09:00 JST — Ontem:","anterior")
+  if h=="06:00":resumo("fechamento","⏰ FECHAMENTO 15:00 JST — Hoje:","dia")
+ time.sleep(55) 
