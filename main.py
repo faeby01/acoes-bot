@@ -45,7 +45,7 @@ def preco(t,modo):
    p=closes[-1];ref=closes[-2]
    mx=highs[-1]if highs else p;mn=lows[-1]if lows else p
   else:
-   p=m.get("regularMarketPrice",0);ref=m.get("regularMarketOpen",0)
+   p=m.get("regularMarketPrice",0);ref=m.get("previousClose",0)
    mx=m.get("regularMarketDayHigh",0);mn=m.get("regularMarketDayLow",0)
   v=((p-ref)/ref*100)if ref else 0
   amp=((mx-mn)/mn*100)if mn else 0
@@ -75,4 +75,4 @@ while True:
   ultima_hora=h
   if h=="00:00":resumo("manha","📊 ABERTURA 09:00 JST — Ontem:","anterior")
   if h=="06:00":resumo("fechamento","⏰ FECHAMENTO 15:00 JST — Hoje:","dia")
- time.sleep(55) 
+ time.sleep(55)
