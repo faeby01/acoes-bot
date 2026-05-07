@@ -2,7 +2,7 @@ import requests,time
 from datetime import datetime,date
 TOKEN="8750903572:AAEGmATCu-GHKvVkFwP88ocuQzFd2cBkg9Y"
 CHAT="2055797728"
-ATIVOS={"8035.T":"Tokyo Electron","7011.T":"Mitsubishi","9984.T":"SoftBank"}
+ATIVOS={"8035.T":"Tokyo Electron","7011.T":"Mitsubishi","9984.T":"SoftBank","6857.T":"Advantest","6920.T":"Lasertec"}
 enviado={}
 def sinal(pts):
  if pts>=3:return"🟢 BOM PARA TRADE"
